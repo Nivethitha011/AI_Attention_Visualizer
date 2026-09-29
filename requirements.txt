@@ -1,0 +1,6 @@
+easyocr
+torch
+transformers
+pandas
+numpy
+Pillow
