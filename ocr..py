@@ -1,4 +1,3 @@
-```python
 import pytesseract
 import os
 
