@@ -69,6 +69,16 @@ AI-Attention-Visualizer/
 |-- requirements.txt
 |-- README.md
 ```
+<img width="921" height="402" alt="image" src="https://github.com/user-attachments/assets/cf395d61-07fd-4d40-bb32-2058329551f8" />
+<img width="909" height="389" alt="image" src="https://github.com/user-attachments/assets/03be6322-95e4-4acf-a8ea-a0f34acd93a4" />
+<img width="901" height="368" alt="image" src="https://github.com/user-attachments/assets/ac63569b-8704-40e8-a6c2-2289f8b8e53a" />
+<img width="859" height="368" alt="image" src="https://github.com/user-attachments/assets/d35aed6d-daa7-422b-a803-bb959cba03df" />
+<img width="884" height="335" alt="image" src="https://github.com/user-attachments/assets/25232322-82df-436c-b5e7-38987f0dfa98" />
+<img width="878" height="360" alt="image" src="https://github.com/user-attachments/assets/66c47abf-f25b-4422-9233-5c5d4cbb7ab6" />
+<img width="914" height="408" alt="image" src="https://github.com/user-attachments/assets/90e50132-5af9-4468-96e8-1652274c63b1" />
+<img width="747" height="401" alt="image" src="https://github.com/user-attachments/assets/defc4f9c-e138-4f2d-b3d2-a2f75e5ae25b" />
+<img width="620" height="122" alt="image" src="https://github.com/user-attachments/assets/1923f3af-0584-4a22-b26f-5e748caf054c" />
+
 
 ## Installation
 
