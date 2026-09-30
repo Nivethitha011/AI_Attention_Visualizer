@@ -1,6 +1,5 @@
-easyocr
-torch
-transformers
-pandas
+streamlit
 numpy
-Pillow
+pillow
+pytesseract
+sentence-transformers
