@@ -1,8 +1,5 @@
 # AI Attention Visualizer
 
-## Project Link
-
-
 
 ## Project Overview
 
