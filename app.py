@@ -1,302 +1,273 @@
 import streamlit as st
+import numpy as np
 from PIL import Image
 
-from ocr import load_ocr, extract_text
-from embedding import load_model, create_embeddings
-from attention import (
-    get_attention_matrix,
-    attention_dataframe
-)
+from ocr import extract_text
+from embedding import create_embeddings
+from attention import calculate_attention
 
 
-# ------------------------------------------------
-# PAGE CONFIG
-# ------------------------------------------------
+# -----------------------------------------
+# PAGE CONFIGURATION
+# -----------------------------------------
 
 st.set_page_config(
-    page_title="AI OCR Attention Visualizer",
-    page_icon="🤖",
+    page_title="AI Attention Visualizer",
+    page_icon="🧠",
     layout="wide"
 )
 
 
-# ------------------------------------------------
+# -----------------------------------------
 # TITLE
-# ------------------------------------------------
+# -----------------------------------------
 
-st.title("🤖 AI OCR Attention Visualizer")
+st.title("AI Attention Visualizer")
 
 st.write(
-    "Upload an image → OCR extracts the text → "
-    "Transformer analyzes the text → "
-    "Attention is visualized."
+    "Upload a study-note image to extract text "
+    "using Tesseract OCR and visualize word-level "
+    "attention scores."
 )
 
 
-# ------------------------------------------------
-# LOAD OCR
-# ------------------------------------------------
-
-@st.cache_resource
-def get_ocr():
-
-    return load_ocr()
-
-
-# ------------------------------------------------
-# LOAD TRANSFORMER
-# ------------------------------------------------
-
-@st.cache_resource
-def get_transformer():
-
-    return load_model()
-
-
-# ------------------------------------------------
+# -----------------------------------------
 # IMAGE UPLOAD
-# ------------------------------------------------
+# -----------------------------------------
 
-uploaded_file = st.file_uploader(
-    "📷 Upload an image containing text",
-    type=[
-        "png",
-        "jpg",
-        "jpeg"
-    ]
+file = st.file_uploader(
+    "Upload a study-note image",
+    type=["jpg", "jpeg", "png"]
 )
 
 
-if uploaded_file is not None:
+if file is not None:
 
-    # --------------------------------------------
-    # READ IMAGE
-    # --------------------------------------------
+    # -------------------------------------
+    # OPEN IMAGE
+    # -------------------------------------
 
-    image = Image.open(
-        uploaded_file
+    image = Image.open(file)
+
+    st.subheader("Uploaded Image")
+
+    st.image(
+        image,
+        use_container_width=True
     )
 
-    col1, col2 = st.columns(2)
 
-    with col1:
-
-        st.subheader(
-            "📷 Uploaded Image"
-        )
-
-        st.image(
-            image,
-            use_container_width=True
-        )
-
-
-    # --------------------------------------------
+    # -------------------------------------
     # OCR
-    # --------------------------------------------
+    # -------------------------------------
+
+    st.subheader("Extracted Text")
+
+    with st.spinner("Extracting text using Tesseract OCR..."):
+
+        text = extract_text(image)
+
+
+    if not text.strip():
+
+        st.error(
+            "No text found in the image."
+        )
+
+        st.stop()
+
+
+    st.text_area(
+        "OCR Result",
+        text,
+        height=200
+    )
+
+
+    # -------------------------------------
+    # EXTRACT WORDS
+    # -------------------------------------
+
+    words = text.split()
+
+    words = [
+        word.strip(
+            ".,!?;:()[]{}"
+        )
+        for word in words
+    ]
+
+
+    # Remove empty words
+    words = [
+        word
+        for word in words
+        if word
+    ]
+
+
+    # Remove very short words
+    words = [
+        word
+        for word in words
+        if len(word) > 2
+    ]
+
+
+    # Maximum 20 words
+    words = words[:20]
+
+
+    if not words:
+
+        st.error(
+            "No suitable words found."
+        )
+
+        st.stop()
+
+
+    # -------------------------------------
+    # DISPLAY WORDS
+    # -------------------------------------
+
+    st.subheader("Words Selected for Analysis")
+
+    st.write(
+        ", ".join(words)
+    )
+
+
+    # -------------------------------------
+    # CREATE EMBEDDINGS
+    # -------------------------------------
 
     with st.spinner(
-        "🔎 Extracting text using OCR..."
+        "Generating word embeddings..."
     ):
 
-        reader = get_ocr()
-
-        extracted_text, results = extract_text(
-            reader,
-            image
+        embeddings = create_embeddings(
+            words
         )
 
 
-    with col2:
-
-        st.subheader(
-            "📝 OCR Result"
-        )
-
-        if extracted_text.strip():
-
-            st.text_area(
-                "Extracted Text",
-                extracted_text,
-                height=200
-            )
-
-            st.success(
-                "OCR completed successfully!"
-            )
-
-        else:
-
-            st.error(
-                "No text detected in the image."
-            )
+    st.success(
+        "Word embeddings generated successfully."
+    )
 
 
-    # --------------------------------------------
-    # OCR DETAILS
-    # --------------------------------------------
+    # -------------------------------------
+    # EMBEDDING INFORMATION
+    # -------------------------------------
 
-    if results:
+    st.subheader("Embedding Information")
 
-        st.subheader(
-            "🔍 OCR Detection Details"
-        )
+    st.write(
+        f"Number of words: **{len(words)}**"
+    )
 
-        for i, result in enumerate(results):
-
-            text = result[1]
-            confidence = result[2]
-
-            st.write(
-                f"**{i + 1}. {text}**  "
-                f"Confidence: {confidence:.2%}"
-            )
+    st.write(
+        f"Embedding dimension: **{embeddings.shape[1]}**"
+    )
 
 
-    # --------------------------------------------
-    # TRANSFORMER ATTENTION
-    # --------------------------------------------
+    # -------------------------------------
+    # ATTENTION
+    # -------------------------------------
 
-    if extracted_text.strip():
+    with st.spinner(
+        "Calculating attention scores..."
+    ):
 
-        st.divider()
-
-        st.header(
-            "🧠 Transformer Attention"
-        )
-
-        with st.spinner(
-            "🤖 Calculating attention..."
-        ):
-
-            tokenizer, model = get_transformer()
-
-            inputs, outputs = create_embeddings(
-                extracted_text,
-                tokenizer,
-                model
-            )
-
-            tokens, attention = get_attention_matrix(
-                inputs,
-                outputs,
-                tokenizer
-            )
-
-
-        st.success(
-            "Attention calculated successfully!"
+        scores = calculate_attention(
+            embeddings
         )
 
 
-        # ----------------------------------------
-        # ATTENTION MATRIX
-        # ----------------------------------------
+    # -------------------------------------
+    # ATTENTION VISUALIZATION
+    # -------------------------------------
 
-        st.subheader(
-            "🔥 Attention Heatmap"
+    st.subheader("Word Attention")
+
+    # Normalize scores
+    if scores.max() > 0:
+
+        display_scores = (
+            scores / scores.max()
         )
 
-        attention_df = attention_dataframe(
-            tokens,
-            attention
+    else:
+
+        display_scores = scores
+
+
+    # Display each word
+    for word, score in zip(
+        words,
+        display_scores
+    ):
+
+        st.write(
+            f"**{word}**"
         )
 
-        st.dataframe(
-            attention_df.style
-            .background_gradient(
-                cmap="Blues"
-            )
-            .format("{:.3f}"),
-            use_container_width=True
+        st.progress(
+            float(score)
         )
 
-
-        # ----------------------------------------
-        # SELECT TOKEN
-        # ----------------------------------------
-
-        st.subheader(
-            "🔍 Explore Token Attention"
-        )
-
-        selected_token = st.selectbox(
-            "Select a token",
-            tokens
-        )
-
-        selected_index = tokens.index(
-            selected_token
+        st.caption(
+            f"Attention Score: {score:.4f}"
         )
 
 
-        # ----------------------------------------
-        # ATTENTION SCORES
-        # ----------------------------------------
+    # -------------------------------------
+    # TOP ATTENTION WORD
+    # -------------------------------------
 
-        scores = attention[
-            selected_index
-        ].detach().numpy()
+    top_index = np.argmax(scores)
 
+    top_word = words[top_index]
 
-        score_data = []
-
-        for token, score in zip(
-            tokens,
-            scores
-        ):
-
-            score_data.append(
-                {
-                    "Token": token,
-                    "Attention": float(score)
-                }
-            )
+    top_score = scores[top_index]
 
 
-        score_data.sort(
-            key=lambda x: x["Attention"],
-            reverse=True
+    st.divider()
+
+    st.subheader(
+        "Highest Attention Word"
+    )
+
+    st.success(
+        f"Word: **{top_word}**"
+    )
+
+    st.write(
+        f"Calculated Attention Score: "
+        f"**{top_score:.4f}**"
+    )
+
+
+    # -------------------------------------
+    # ATTENTION TABLE
+    # -------------------------------------
+
+    st.subheader(
+        "Attention Score Summary"
+    )
+
+    for word, score in zip(
+        words,
+        scores
+    ):
+
+        st.write(
+            f"{word} : {score:.6f}"
         )
-
-
-        # ----------------------------------------
-        # BAR CHART
-        # ----------------------------------------
-
-        st.subheader(
-            f'📊 Attention from "{selected_token}"'
-        )
-
-        chart_data = {
-            item["Token"]:
-            item["Attention"]
-            for item in score_data
-        }
-
-        st.bar_chart(
-            chart_data
-        )
-
-
-        # ----------------------------------------
-        # TOP TOKENS
-        # ----------------------------------------
-
-        st.subheader(
-            "⭐ Highest Attention Tokens"
-        )
-
-        for item in score_data[:10]:
-
-            st.write(
-                f"**{item['Token']}** → "
-                f"{item['Attention']:.4f}"
-            )
 
 
 else:
 
     st.info(
-        "👆 Upload an image to start OCR."
+        "Upload an image to start the AI Attention analysis."
     )
