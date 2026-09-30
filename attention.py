@@ -1,58 +1,38 @@
-import torch
-import pandas as pd
+import numpy as np
 
 
-def get_attention_matrix(
-    inputs,
-    outputs,
-    tokenizer
-):
-
-    # Last Transformer layer
-    last_layer_attention = outputs.attentions[-1]
-
-    # Average all attention heads
-    attention = last_layer_attention.mean(
-        dim=1
-    )[0]
-
-    # Convert token IDs to tokens
-    tokens = tokenizer.convert_ids_to_tokens(
-        inputs["input_ids"][0]
+def softmax(x):
+    exp_x = np.exp(
+        x - np.max(x, axis=-1, keepdims=True)
     )
 
-    # Remove special tokens
-    valid_indices = [
-        i
-        for i, token in enumerate(tokens)
-        if token not in [
-            "[CLS]",
-            "[SEP]",
-            "[PAD]"
-        ]
-    ]
-
-    tokens = [
-        tokens[i]
-        for i in valid_indices
-    ]
-
-    attention = attention[
-        valid_indices
-    ][:, valid_indices]
-
-    return tokens, attention
-
-
-def attention_dataframe(
-    tokens,
-    attention
-):
-
-    values = attention.detach().numpy()
-
-    return pd.DataFrame(
-        values,
-        index=tokens,
-        columns=tokens
+    return exp_x / np.sum(
+        exp_x,
+        axis=-1,
+        keepdims=True
     )
+
+
+def calculate_attention(X):
+    d_model = X.shape[1]
+    d_k = 64
+
+    np.random.seed(42)
+
+    WQ = np.random.randn(d_model, d_k)
+    WK = np.random.randn(d_model, d_k)
+    WV = np.random.randn(d_model, d_k)
+
+    Q = X @ WQ
+    K = X @ WK
+    V = X @ WV
+
+    scores = Q @ K.T
+
+    scaled_scores = scores / np.sqrt(d_k)
+
+    attention_weights = softmax(scaled_scores)
+
+    word_scores = attention_weights.mean(axis=0)
+
+    return word_scores
