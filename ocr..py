@@ -1,33 +1,9 @@
-import easyocr
-import numpy as np
+import pytesseract
+
+pytesseract.pytesseract.tesseract_cmd = (
+    r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+)
 
 
-def load_ocr():
-    """
-    Load EasyOCR English reader.
-    """
-    return easyocr.Reader(
-        ["en"],
-        gpu=False
-    )
-
-
-def extract_text(reader, image):
-    """
-    Extract text from an image.
-
-    Returns:
-        extracted_text
-        detection_results
-    """
-
-    image_array = np.array(image)
-
-    results = reader.readtext(image_array)
-
-    extracted_text = " ".join(
-        result[1]
-        for result in results
-    )
-
-    return extracted_text, results
+def extract_text(image):
+    return pytesseract.image_to_string(image)
